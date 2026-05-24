@@ -1,0 +1,334 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Monitor, 
+  Smartphone, 
+  Link as LinkIcon, 
+  Send, 
+  Wifi, 
+  Battery, 
+  Signal,
+  Loader2,
+  MessageCircle,
+  Home,
+  Image as ImageIcon,
+  Settings,
+  ChevronLeft,
+  MousePointer2,
+  ShieldAlert
+} from 'lucide-react';
+
+export default function RemoteControlApp() {
+  const [step, setStep] = useState('idle'); // idle, link_generated, link_sent, connected
+  const [currentApp, setCurrentApp] = useState('chat'); // chat, home, gallery, settings
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update jam untuk simulasi layar
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleGenerateLink = () => setStep('link_generated');
+  const handleSendLink = () => setStep('link_sent');
+  
+  const handleTargetClickLink = () => {
+    setStep('connected');
+    // Setelah terhubung, biarkan di chat sebentar agar terlihat transisinya
+  };
+
+  const resetSimulation = () => {
+    setStep('idle');
+    setCurrentApp('chat');
+  };
+
+  // Fungsi untuk menangani klik/interaksi. 
+  // 'source' bisa 'target' (pemilik HP) atau 'viewer' (pemantau)
+  const handleInteract = (action, source) => {
+    // Pemantau hanya bisa berinteraksi jika statusnya sudah terkoneksi
+    if (source === 'viewer' && step !== 'connected') return;
+    
+    setCurrentApp(action);
+  };
+
+  // --- KOMPONEN LAYAR HP (Dapat digunakan oleh Target dan Pemantau) ---
+  const PhoneScreen = ({ isViewer = false }) => {
+    return (
+      <div className="w-full h-full bg-slate-900 text-white flex flex-col relative overflow-hidden font-sans select-none">
+        {/* Status Bar */}
+        <div className="flex justify-between items-center px-4 py-2 text-[10px] sm:text-xs bg-slate-900 z-20">
+          <span>{currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Signal size={12} />
+            <Wifi size={12} />
+            <Battery size={12} />
+          </div>
+        </div>
+        
+        {/* Area Konten Layar */}
+        <div className="flex-1 bg-slate-100 text-slate-800 flex flex-col relative overflow-hidden">
+          
+          {/* Overlay Kursor Virtual (Hanya terlihat di HP Target saat pemantau mengendalikan) */}
+          {isViewer === false && step === 'connected' && (
+            <div className="absolute top-2 right-2 bg-red-500 text-white text-[9px] px-2 py-1 rounded-full animate-pulse z-50 flex items-center gap-1 shadow-lg pointer-events-none">
+              <Monitor size={10} /> Dikendalikan
+            </div>
+          )}
+
+          {/* APLIKASI: CHAT */}
+          {currentApp === 'chat' && (
+            <div className="flex-1 flex flex-col h-full absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-slate-100 transition-all">
+              <div className="bg-emerald-600 text-white p-3 flex items-center gap-3 shadow-md z-10">
+                {step === 'connected' && (
+                  <button onClick={() => handleInteract('home', isViewer ? 'viewer' : 'target')} className="p-1 hover:bg-emerald-700 rounded cursor-pointer">
+                    <ChevronLeft size={18} />
+                  </button>
+                )}
+                <div className="w-8 h-8 bg-emerald-400 rounded-full flex items-center justify-center">
+                  <Monitor size={16} />
+                </div>
+                <div>
+                  <div className="font-bold text-xs sm:text-sm">Admin IT / Bos</div>
+                  <div className="text-[9px] sm:text-[10px] text-emerald-100">Online</div>
+                </div>
+              </div>
+
+              <div className="flex-1 p-3 flex flex-col justify-end gap-3 overflow-y-auto">
+                <div className="bg-white p-3 rounded-lg rounded-tl-none max-w-[85%] text-xs sm:text-sm shadow-sm">
+                  Tolong cek dokumen yang saya kirim hari ini.
+                </div>
+                <div className="bg-emerald-100 p-3 rounded-lg rounded-tr-none max-w-[85%] self-end text-xs sm:text-sm shadow-sm">
+                  Baik pak, segera saya cek.
+                </div>
+
+                {step === 'link_sent' && (
+                  <div className="bg-white p-3 rounded-lg rounded-tl-none max-w-[85%] text-xs sm:text-sm shadow-sm animate-in fade-in slide-in-from-left-4">
+                    Klik link ini untuk update sistem perangkat:<br/>
+                    <button 
+                      onClick={() => !isViewer && handleTargetClickLink()}
+                      className={`text-blue-600 font-medium mt-2 text-left underline break-all ${isViewer ? 'opacity-50 cursor-not-allowed' : 'hover:text-blue-800 cursor-pointer active:scale-95'}`}
+                      disabled={isViewer} // Pemantau tidak bisa mengklik link ini untuk target
+                    >
+                      https://sys-update.local/auth?id=8x9q2
+                    </button>
+                  </div>
+                )}
+
+                {step === 'connected' && (
+                  <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg shadow-sm text-center text-emerald-700 text-xs mt-4">
+                    Sistem berhasil terhubung.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* APLIKASI: HOME SCREEN */}
+          {currentApp === 'home' && (
+            <div className="flex-1 flex flex-col h-full absolute inset-0 bg-gradient-to-b from-blue-500 to-indigo-800 p-4 transition-all">
+              <div className="mt-8 text-center text-white mb-8">
+                <h2 className="text-3xl sm:text-4xl font-light">{currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</h2>
+              </div>
+              
+              <div className="grid grid-cols-4 gap-2 sm:gap-4 mt-auto mb-4">
+                <AppIcon icon={<MessageCircle />} color="bg-emerald-500" label="Chat" onClick={() => handleInteract('chat', isViewer ? 'viewer' : 'target')} />
+                <AppIcon icon={<ImageIcon />} color="bg-purple-500" label="Galeri" onClick={() => handleInteract('gallery', isViewer ? 'viewer' : 'target')} />
+                <AppIcon icon={<Settings />} color="bg-slate-600" label="Setelan" onClick={() => handleInteract('settings', isViewer ? 'viewer' : 'target')} />
+              </div>
+            </div>
+          )}
+
+          {/* APLIKASI: GALERI PALSUL */}
+          {currentApp === 'gallery' && (
+            <div className="flex-1 flex flex-col h-full absolute inset-0 bg-white transition-all">
+              <div className="p-3 font-bold text-sm sm:text-base border-b flex items-center gap-2">
+                <button onClick={() => handleInteract('home', isViewer ? 'viewer' : 'target')} className="p-1 hover:bg-slate-100 rounded cursor-pointer"><ChevronLeft size={18} /></button>
+                Galeri Foto
+              </div>
+              <div className="p-2 grid grid-cols-3 gap-1 overflow-y-auto flex-1 content-start">
+                {[...Array(12)].map((_, i) => (
+                  <div key={i} className="aspect-square bg-slate-200 rounded animate-pulse" style={{ animationDelay: `${i * 0.1}s` }}></div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* APLIKASI: SETTING */}
+          {currentApp === 'settings' && (
+            <div className="flex-1 flex flex-col h-full absolute inset-0 bg-slate-50 transition-all">
+              <div className="p-3 font-bold text-sm sm:text-base border-b bg-white flex items-center gap-2">
+                <button onClick={() => handleInteract('home', isViewer ? 'viewer' : 'target')} className="p-1 hover:bg-slate-100 rounded cursor-pointer"><ChevronLeft size={18} /></button>
+                Pengaturan
+              </div>
+              <div className="p-4 space-y-3 flex-1 overflow-y-auto">
+                <div className="bg-white p-3 rounded-xl shadow-sm border text-xs sm:text-sm">Akun & Sinkronisasi</div>
+                <div className="bg-white p-3 rounded-xl shadow-sm border text-xs sm:text-sm">Privasi & Keamanan</div>
+                <div className="bg-white p-3 rounded-xl shadow-sm border text-xs sm:text-sm">Aplikasi & Izin</div>
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* Home Indicator Bar (Simulasi Navigasi Bawah) */}
+        <div 
+          className="h-6 bg-black flex justify-center items-center z-20 cursor-pointer hover:bg-slate-900"
+          onClick={() => handleInteract('home', isViewer ? 'viewer' : 'target')}
+          title="Ke Layar Utama"
+        >
+          <div className="w-1/3 h-1 bg-white/50 rounded-full"></div>
+        </div>
+      </div>
+    );
+  };
+
+  // Helper untuk tombol aplikasi di Home
+  const AppIcon = ({ icon, color, label, onClick }) => (
+    <div className="flex flex-col items-center gap-1 cursor-pointer group" onClick={onClick}>
+      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-white ${color} shadow-lg group-hover:scale-105 transition-transform group-active:scale-95`}>
+        {React.cloneElement(icon, { size: 20 })}
+      </div>
+      <span className="text-[9px] sm:text-[10px] text-white font-medium drop-shadow-md">{label}</span>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-200 p-2 sm:p-4 md:p-8 font-sans">
+      
+      <div className="max-w-6xl mx-auto mb-6 text-center">
+        <h1 className="text-2xl sm:text-3xl font-bold text-indigo-400 flex items-center justify-center gap-2 mb-2">
+          <MousePointer2 /> Remote Control Simulator
+        </h1>
+        <p className="text-slate-400 text-xs sm:text-sm px-4">
+          Simulator kontrol jarak jauh. Pemantau dapat melihat dan mengklik isi layar target.
+        </p>
+      </div>
+
+      {/* Wrapper Utama: Tumpuk vertikal di HP, sejajar horizontal di PC */}
+      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
+        
+        {/* =========================================
+            PANEL PEMANTAU (LAYAR ANDA / VIEWER) 
+        ========================================= */}
+        <div className="flex-1 bg-slate-900 border border-slate-700 rounded-3xl overflow-hidden flex flex-col shadow-2xl">
+          <div className="bg-slate-800 p-3 sm:p-4 border-b border-slate-700 flex justify-between items-center">
+            <h2 className="font-bold flex items-center gap-2 text-indigo-400 text-sm sm:text-base">
+              <Monitor size={18} /> Perangkat Anda (Pemantau)
+            </h2>
+            <button onClick={resetSimulation} className="text-xs text-slate-400 hover:text-white underline">
+              Reset Skenario
+            </button>
+          </div>
+          
+          <div className="p-4 sm:p-6 flex-1 flex flex-col">
+            
+            {/* Tombol Aksi Pemasangan */}
+            <div className="bg-slate-800/50 p-3 rounded-xl mb-4 sm:mb-6 border border-slate-700/50">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button 
+                  onClick={handleGenerateLink}
+                  disabled={step !== 'idle'}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 transition-colors py-2 px-3 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  <LinkIcon size={16} /> 1. Buat Link
+                </button>
+                <button 
+                  onClick={handleSendLink}
+                  disabled={step !== 'link_generated'}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 transition-colors py-2 px-3 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  <Send size={16} /> 2. Kirim Link
+                </button>
+              </div>
+            </div>
+
+            {/* View Finder (Area Kontrol Layar) */}
+            <div className="flex-1 bg-black rounded-xl border border-slate-700 flex flex-col overflow-hidden relative min-h-[350px] sm:min-h-[500px]">
+              <div className="bg-slate-800 p-2 text-[10px] sm:text-xs text-center border-b border-slate-700 text-slate-400 flex justify-between items-center px-4">
+                <span>View Finder & Control</span>
+                {step === 'connected' && <span className="text-emerald-400 flex items-center gap-1"><div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div> Live Control Aktif</span>}
+              </div>
+              
+              <div className="flex-1 flex items-center justify-center p-2 sm:p-4 bg-slate-950 relative">
+                
+                {step === 'idle' && (
+                  <div className="text-center text-slate-600">
+                    <Monitor size={48} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-xs sm:text-sm">Siapkan link untuk mulai memantau.</p>
+                  </div>
+                )}
+                
+                {(step === 'link_generated' || step === 'link_sent') && (
+                  <div className="text-center text-slate-400">
+                    <Loader2 size={32} className="mx-auto mb-3 text-indigo-500 animate-spin" />
+                    <p className="text-sm font-medium">Menunggu Target...</p>
+                    <p className="text-[10px] sm:text-xs text-slate-500 mt-1">Perhatikan layar HP Target di sebelahnya.</p>
+                  </div>
+                )}
+
+                {/* Layar Cermin (Klik-able untuk interaksi jarak jauh) */}
+                {step === 'connected' && (
+                  <div className="relative group w-full max-w-[280px] sm:max-w-[320px] aspect-[9/19] rounded-2xl sm:rounded-3xl border-4 border-slate-800 overflow-hidden shadow-2xl transition-all cursor-pointer ring-2 ring-transparent hover:ring-indigo-500">
+                    <PhoneScreen isViewer={true} />
+                    
+                    {/* Petunjuk Aksi (Hanya muncul saat di-hover di PC) */}
+                    <div className="absolute inset-0 bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center justify-center">
+                      <div className="bg-slate-900/80 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-sm flex items-center gap-2">
+                        <MousePointer2 size={12} /> Klik untuk mengontrol
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+
+        {/* =========================================
+            PANEL TARGET (YANG DIPANTAU/DIKENDALIKAN)
+        ========================================= */}
+        <div className="flex-1 flex flex-col items-center justify-center bg-slate-900/50 border border-slate-800 lg:border-transparent rounded-3xl p-6">
+          <div className="mb-4 text-center">
+            <h2 className="font-bold text-sm sm:text-lg text-emerald-400 flex items-center justify-center gap-2">
+              <Smartphone size={20} /> Perangkat Target
+            </h2>
+            <p className="text-[10px] sm:text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+              Simulasi HP korban/target. Perhatikan apa yang terjadi saat pemantau mengklik sesuatu.
+            </p>
+          </div>
+
+          {/* MOCKUP HP TARGET UTAMA */}
+          <div className="w-full max-w-[280px] sm:max-w-[300px] aspect-[9/19] bg-black rounded-[2rem] sm:rounded-[2.5rem] border-[6px] sm:border-[8px] border-slate-800 shadow-2xl relative overflow-hidden ring-1 ring-slate-700">
+            {/* Notch Kamera Depan */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 sm:w-32 h-5 sm:h-6 bg-slate-800 rounded-b-xl z-30 flex justify-center items-end pb-1 sm:pb-1.5">
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-black rounded-full"></div>
+            </div>
+
+            {/* Render Layar Target yang Asli */}
+            <PhoneScreen isViewer={false} />
+
+            {/* Petunjuk Interaktif (Floating Arrow) */}
+            {step === 'link_sent' && (
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-indigo-600 text-white p-3 rounded-lg text-xs sm:text-sm font-bold text-center w-[80%] shadow-2xl animate-bounce z-50 ring-2 ring-white">
+                 Klik link biru di chat ini untuk mensimulasikan target! ⬇️
+               </div>
+            )}
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* Catatan Kaki */}
+      <div className="max-w-6xl mx-auto mt-8 flex flex-col sm:flex-row gap-2 items-start sm:items-center bg-slate-900/80 border border-slate-700/50 text-slate-300 text-[10px] sm:text-xs px-4 py-3 rounded-xl">
+        <ShieldAlert size={18} className="shrink-0 text-amber-500" />
+        <p>
+          <strong className="text-amber-500">Konteks Teknologi:</strong> Dalam dunia nyata, fitur <em>remote control</em> seperti ini menggunakan teknologi WebRTC Data Channels (untuk mengirim posisi klik dan ketikan keyboard) yang dipadukan dengan Accessibility Services (Android) atau profil MDM khusus.
+        </p>
+      </div>
+
+    </div>
+  );
+}
